@@ -10,7 +10,8 @@
     "node": ">= 0.8.x"
   },
   "dependencies": {
-    "socket.io": "latest",
-    "node-static": "latest"
+    "leaflet": "^1.6.0",
+    "node-static": "^0.7.11",
+    "socket.io": "^2.3.0"
   }
 }
