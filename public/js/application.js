@@ -58,19 +58,31 @@ $(function() {
 		// load leaflet map
 		map = L.map('map');
 
-		L.tileLayer('https://{s}.tiles.mapbox.com/v3/examples.map-i87786ca/{z}/{x}/{y}.png', { maxZoom: 18, detectRetina: true }).addTo(map);
+		//L.tileLayer('https://{s}.tiles.mapbox.com/v3/examples.map-i87786ca/{z}/{x}/{y}.png', { maxZoom: 18, detectRetina: true }).addTo(map);
+		L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    		maxZoom: 18,
+    		id: 'mapbox/streets-v11',
+    		tileSize: 512,
+    		zoomOffset: -1,
+    		accessToken: 'pk.eyJ1Ijoia2FpbG9vZmkiLCJhIjoiY2s4ZHphYWZ4MHp6YzNrbzF4bTJ6c3hsMCJ9.yuA7vg_xAv-OlHe2iKavBg'
+		}).addTo(map);
+
+		map.on('click', onMapClick);
 
 		// set map bounds
 		map.fitWorld();
 		userMarker.addTo(map);
 		userMarker.bindPopup('<p>You are there! Your ID is ' + userId + '</p>').openPopup();
 
+
+
 		var emit = $.now();
 		// send coords on when user is active
 		doc.on('mousemove', function() {
 			active = true;
 
-			sentData = {
+			/*sentData = {
 				id: userId,
 				active: active,
 				coords: [{
@@ -78,18 +90,60 @@ $(function() {
 					lng: lng,
 					acr: acr
 				}]
-			};
+			};*/
 
-			if ($.now() - emit > 30) {
+			sentData = [{
+				id: userId,
+				active: active,
+				coords: [{
+					lat: lat,
+					lng: lng,
+					acr: acr
+				}]
+			},
+			{
+				id: "user2",
+				active: active,
+				coords: [{
+					lat: getRandomInRange(-90,90, 3),
+					lng: getRandomInRange(-180,180, 3),
+					acr: acr
+				}]
+			},
+			{
+				id: "user3",
+				active: active,
+				coords: [{
+					lat: getRandomInRange(-90,90, 3),
+					lng: getRandomInRange(-180,180, 3),
+					acr: acr
+				}]
+			}
+		];
+
+		socket.emit('send:coords', sentData);
+			/*if ($.now() - emit > 30) {
 				socket.emit('send:coords', sentData);
 				emit = $.now();
-			}
+			}*/
 		});
 	}
 
-	doc.bind('mouseup mouseleave', function() {
+	/*doc.bind('mouseup mouseleave', function() {
 		active = false;
-	});
+	});*/
+
+	// click activity
+	function onMapClick(e) {
+		L.popup()
+        .setLatLng(e.latlng)
+        .setContent("Showing activities " + e.latlng.toString())
+		.openOn(map);
+
+		socket.emit('send:coords', sentData);
+
+
+	}
 
 	// showing markers for connections
 	function setMarker(data) {
@@ -127,4 +181,9 @@ $(function() {
 			}
 		}
 	}, 15000);
+
+	// helper method to generate random geocoordinates
+	function getRandomInRange(from, to, fixed) {
+		return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+	}
 });
